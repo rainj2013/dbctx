@@ -1,0 +1,7 @@
+interface:
+  display_name: "dbctx"
+  short_description: "Database context for backend coding"
+  default_prompt: "Use $dbctx to review database access changes with schema, indexes, stats, and SQL risk checks."
+policy:
+  allow_implicit_invocation: true
+

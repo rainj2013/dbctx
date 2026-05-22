@@ -1,0 +1,43 @@
+version: 1
+
+snapshot:
+  path: .dbctx/snapshot.json
+
+connections:
+  prod_snapshot:
+    type: mysql
+    dsn_env: DBCTX_PROD_SNAPSHOT_DSN
+    readonly: true
+    allow:
+      - snapshot
+
+  test_verify:
+    type: mysql
+    dsn_env: DBCTX_TEST_VERIFY_DSN
+    readonly: true
+    allow:
+      - explain
+
+mysql:
+  default_schema: ""
+
+privacy:
+  sample_rows: false
+  mask_columns:
+    - phone
+    - email
+    - id_card
+    - address
+
+rules:
+  large_table_threshold: 1000000
+  forbid_select_star: true
+  forbid_deep_offset: true
+  deep_offset_threshold: 10000
+  require_where_for_update_delete: true
+  soft_delete_columns:
+    - deleted
+    - is_deleted
+  tenant_columns:
+    - tenant_id
+
