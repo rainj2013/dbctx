@@ -34,11 +34,12 @@ metadata:
    - `dbctx schema <table>`
    - `dbctx indexes <table>`
    - `dbctx stats <table>`
-3. 对每条新增或修改后的 SQL 执行：
+3. 对每条新增或修改后的 SQL 执行 dbctx 预检：
    - `dbctx review --sql "<sql>"`
 4. 如果配置了验证库，执行：
    - `dbctx explain --conn test_verify --sql "<sql>"`
-5. 完成前修复所有 `error` 和高风险 SQL。保留 warning 时说明原因。
+5. 基于 `review` 输出的表规模、索引、谓词列、排序列、规则 finding，以及可选 `explain` 结果，自己完成最终 SQL 审查。`dbctx review` 是确定性事实采集和预检，不是完整 SQL 优化器。
+6. 完成前修复所有明确的 `error` 和高风险 SQL。保留 warning 时说明原因。
 
 ## 动态 SQL
 
@@ -52,8 +53,11 @@ metadata:
 
 然后对每个有意义的变体运行 `dbctx review --sql`。
 
+## LLM 审查职责
+
+dbctx CLI 不单独接 LLM，因为 Skill 本身就在 LLM Agent 环境里运行。CLI 负责给出真实数据库事实和基础规则信号，Agent 负责结合业务语义判断谓词选择性、联合索引顺序、租户/软删除约束、排序分页方式、测试库 explain 与生产数据分布的差异。
+
 ## 环境区别
 
 snapshot 通常来自生产/准生产元数据，用于判断生产风险。
 `explain` 通常运行在测试/验证库，用于验证 SQL 语法、兼容性和测试库执行计划。测试库执行计划不等于生产性能结论。
-

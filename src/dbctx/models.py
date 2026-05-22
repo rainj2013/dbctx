@@ -78,15 +78,27 @@ class Finding(BaseModel):
     suggestion: str | None = None
 
 
+class ReviewTableContext(BaseModel):
+    table: str
+    row_count: int | None = None
+    data_size_bytes: int | None = None
+    index_size_bytes: int | None = None
+    predicate_columns: list[str] = Field(default_factory=list)
+    order_columns: list[str] = Field(default_factory=list)
+    join_columns: list[str] = Field(default_factory=list)
+    indexes: list[dict[str, object]] = Field(default_factory=list)
+
+
 class ReviewResult(BaseModel):
     risk: Literal["low", "medium", "high"]
     tables: list[str] = Field(default_factory=list)
     matched_indexes: list[str] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)
+    context: list[ReviewTableContext] = Field(default_factory=list)
+    analysis_guidance: list[str] = Field(default_factory=list)
 
 
 class ExplainResult(BaseModel):
     connection: str
     warning: str | None = None
     raw: object
-

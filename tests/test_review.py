@@ -53,6 +53,12 @@ def test_review_matches_index_for_selective_query():
     )
     assert "idx_tenant_user_created" in result.matched_indexes
     assert all(f.severity != "error" for f in result.findings)
+    assert result.context
+    assert result.context[0].table == "order_db.orders"
+    assert result.context[0].row_count == 20_000_000
+    assert result.context[0].predicate_columns == ["deleted", "tenant_id", "user_id"]
+    assert result.context[0].indexes
+    assert result.analysis_guidance
 
 
 def test_review_flags_deep_offset():
@@ -63,4 +69,3 @@ def test_review_flags_deep_offset():
         "order_db",
     )
     assert any(f.code == "deep_offset_pagination" for f in result.findings)
-

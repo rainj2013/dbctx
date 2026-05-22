@@ -81,13 +81,34 @@ def render_review(result: ReviewResult) -> None:
         console.print(f"[bold]Matched indexes:[/bold] {', '.join(result.matched_indexes)}")
     if not result.findings:
         console.print("[green]No findings.[/green]")
-        return
-    table = Table(title="Findings")
-    table.add_column("Severity")
-    table.add_column("Code")
-    table.add_column("Message")
-    table.add_column("Suggestion")
-    for finding in result.findings:
-        table.add_row(finding.severity, finding.code, finding.message, finding.suggestion or "")
-    console.print(table)
-
+    else:
+        table = Table(title="Findings")
+        table.add_column("Severity")
+        table.add_column("Code")
+        table.add_column("Message")
+        table.add_column("Suggestion")
+        for finding in result.findings:
+            table.add_row(finding.severity, finding.code, finding.message, finding.suggestion or "")
+        console.print(table)
+    if result.context:
+        context_table = Table(title="SQL Context For Agent Reasoning")
+        context_table.add_column("Table")
+        context_table.add_column("Rows", justify="right")
+        context_table.add_column("Predicates")
+        context_table.add_column("Order")
+        context_table.add_column("Indexes")
+        for item in result.context:
+            context_table.add_row(
+                item.table,
+                str(item.row_count or ""),
+                ", ".join(item.predicate_columns),
+                ", ".join(item.order_columns),
+                "; ".join(
+                    f"{idx['name']}({', '.join(idx['columns'])})" for idx in item.indexes
+                ),
+            )
+        console.print(context_table)
+    if result.analysis_guidance:
+        console.print("[bold]Agent guidance:[/bold]")
+        for line in result.analysis_guidance:
+            console.print(f"- {line}")

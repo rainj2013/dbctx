@@ -7,7 +7,7 @@ import sqlglot
 from sqlglot import exp
 
 from dbctx.config import RulesConfig
-from dbctx.models import DatabaseSnapshot, Finding, ReviewResult, TableInfo
+from dbctx.models import DatabaseSnapshot, Finding, ReviewResult, ReviewTableContext, TableInfo
 from dbctx.review.result import build_result
 from dbctx.snapshot import resolve_table
 
@@ -107,7 +107,41 @@ def review_sql(sql: str, snapshot: DatabaseSnapshot, rules: RulesConfig, default
     _review_like_prefix(sql, findings)
     _review_index_functions(statement, tables, findings)
 
-    return build_result([f"{t.schema_name}.{t.name}" for t in tables], ctx.matched_indexes, findings)
+    return build_result(
+        [f"{t.schema_name}.{t.name}" for t in tables],
+        ctx.matched_indexes,
+        findings,
+        _review_context(ctx),
+    )
+
+
+def _review_context(ctx: SQLContext) -> list[ReviewTableContext]:
+    result: list[ReviewTableContext] = []
+    for table in ctx.tables:
+        columns = table.column_map()
+        result.append(
+            ReviewTableContext(
+                table=f"{table.schema_name}.{table.name}",
+                row_count=table.row_count,
+                data_size_bytes=table.data_size_bytes,
+                index_size_bytes=table.index_size_bytes,
+                predicate_columns=sorted(col for col in ctx.predicates if col in columns),
+                order_columns=ctx.order_columns,
+                join_columns=sorted(col for col in ctx.join_columns if col in columns),
+                indexes=[
+                    {
+                        "name": index.name,
+                        "unique": index.unique,
+                        "columns": index.column_names,
+                        "cardinality": [
+                            column.cardinality for column in sorted(index.columns, key=lambda c: c.seq)
+                        ],
+                    }
+                    for index in table.indexes
+                ],
+            )
+        )
+    return result
 
 
 def _review_table_context(table: TableInfo, ctx: SQLContext, rules: RulesConfig, findings: list[Finding]) -> None:
